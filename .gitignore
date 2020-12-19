@@ -1,0 +1,9 @@
+*.asv
+*.exe
+*.gif
+*.tmp
+*$*.docx
+*$*.pptx
+*$*.xslx
+*$*.pyc
+

@@ -9,12 +9,22 @@ import glob
 import os
 from PyQt5.QtWidgets import QMainWindow, QApplication
 from matplotlib import pyplot as plt
+from matplotlib import pyplot
+from keras.datasets import cifar10
+from keras.models import load_model
+from keras.utils import to_categorical
+from keras.models import model_from_json
+import keras.backend as K
+
 cont4 = 0
 machingKpoint1 = 0
 machingKpoint2 = 0
 img4_match = 0
 list_keypoints1 = []
 list_keypoints2 = []
+model = load_model('final_model.h5')
+labels = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+(x_img_train,y_label_train),(x_img_test, y_label_test)=cifar10.load_data()
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
@@ -31,6 +41,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.btn3_1.clicked.connect(self.on_btn3_1_click)
         self.btn4_1.clicked.connect(self.on_btn4_1_click)
         self.btn4_2.clicked.connect(self.on_btn4_2_click)
+        self.btn5_1.clicked.connect(self.on_btn5_1_click)
+        self.btn5_2.clicked.connect(self.on_btn5_2_click)
+        self.btn5_3.clicked.connect(self.on_btn5_3_click)
+        self.btn5_4.clicked.connect(self.on_btn5_4_click)
+        self.btn5_5.clicked.connect(self.on_btn5_5_click)
+
 
     def on_btn1_1_click(self):
         # termination criteria
@@ -328,6 +344,62 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             cv.waitKey(0)
             cv.destroyAllWindows()
 
+    def on_btn5_1_click(self):
+        # load dataset
+        (trainX, trainy), (testX, testy) = cifar10.load_data()
+        # summarize loaded dataset
+        print('Train: X=%s, y=%s' % (trainX.shape, trainy.shape))
+        print('Test: X=%s, y=%s' % (testX.shape, testy.shape))
+        fig, axes = plt.subplots(ncols=5, nrows=2, figsize=(17, 8))
+        index = 0
+        for i in range(2):
+            for j in range(5):
+                axes[i,j].set_title(labels[trainy[index][0]])
+                axes[i,j].imshow(trainX[index])
+                axes[i,j].get_xaxis().set_visible(False)
+                axes[i,j].get_yaxis().set_visible(False)
+                index += 1
+        plt.show()
+
+
+    def on_btn5_2_click(self):
+        print('hyperparameters: ')
+        print('batch size: 64')
+        print('learning rate: ',K.eval(model.optimizer.lr))
+        print('optimizer: SGD')
+        
+    def on_btn5_3_click(self):
+        model.summary()
+
+    def on_btn5_4_click(self):
+        acc = cv.imread("0-main.py_plot.png", cv.IMREAD_COLOR)
+        cv.imshow('acc',acc)
+        cv.waitKey(0)
+        cv.destroyAllWindows()
+
+    def on_btn5_5_click(self):
+        x_img_train_normalize = x_img_train.astype('float32') / 255.0
+        x_img_test_normalize = x_img_test.astype('float32') / 255.0
+
+        prediction = model.predict_classes(x_img_test_normalize)
+        Predicted_Probability = model.predict(x_img_test_normalize)
+        label_dict={0:"airplane",1:"automobile",2:"bird",3:"cat",4:"deer",
+            5:"dog",6:"frog",7:"horse",8:"ship",9:"truck"}
+        i = int(self.SpinBox5.text())    
+
+        print('label:',label_dict[y_label_test[i][0]],'predict:',label_dict[prediction[i]])
+        preArr = []
+        for j in range(10):
+            preArr.append('%1.9f'% (Predicted_Probability[i][j]))
+        preArr = list(map(float, preArr))    
+        y=np.arange(0, 1, 0.2)
+        plt.figure(figsize=(10,5)) 
+        plt.yticks(y)   
+        plt.bar(labels, preArr, label = 'acc')
+
+        plt.figure(figsize=(2,2))
+        plt.imshow(np.reshape(x_img_test[i],(32, 32,3)))
+        plt.show()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
